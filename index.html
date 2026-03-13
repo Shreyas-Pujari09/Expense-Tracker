@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-screen bg-blue-50 text-gray-900">
+    <div class="min-h-screen flex flex-col">
+      <!-- Header -->
+      <header class="border-b border-blue-100 bg-blue-100 sticky top-0 z-20">
+        <div
+          class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4"
+        >
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-blue-900">
+              Expense Tracker
+            </h1>
+            <p class="text-sm text-blue-900/70">
+              Track your daily spending and stay on top of your budget.
+            </p>
+          </div>
+          <span
+            class="hidden sm:inline-flex text-xs px-3 py-1 rounded-full border border-blue-200 text-blue-800 bg-blue-50"
+          >
+            HTML · Tailwind · JavaScript
+          </span>
+        </div>
+      </header>
+
+      <!-- Main content -->
+      <main class="flex-1">
+        <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          <!-- Top row: form + total card -->
+          <div class="grid gap-6 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <!-- Expense form card -->
+            <section
+              class="bg-blue-100/60 border border-blue-200 rounded-xl shadow-sm p-5 sm:p-6 space-y-4"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <h2 class="text-lg font-semibold tracking-tight text-gray-900">
+                  Add New Expense
+                </h2>
+                <span
+                  class="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"
+                  >Today:
+                  <span id="current-date" class="font-mono"></span
+                ></span>
+              </div>
+
+              <form id="expense-form" class="space-y-4">
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <!-- Expense name -->
+                  <div class="space-y-1.5">
+                    <label
+                      for="expense-name"
+                      class="block text-xs font-medium text-gray-700"
+                      >Expense name</label
+                    >
+                    <input
+                      id="expense-name"
+                      type="text"
+                      placeholder="e.g. Lunch at cafe"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      autocomplete="off"
+                    />
+                  </div>
+
+                  <!-- Amount -->
+                  <div class="space-y-1.5">
+                    <label
+                      for="expense-amount"
+                      class="block text-xs font-medium text-gray-700"
+                      >Amount</label
+                    >
+                    <div class="relative">
+                      <span
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-gray-400"
+                        >₹</span
+                      >
+                      <input
+                        id="expense-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        class="w-full rounded-lg border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+                  <!-- Category -->
+                  <div class="space-y-1.5">
+                    <label
+                      for="expense-category"
+                      class="block text-xs font-medium text-gray-700"
+                      >Category</label
+                    >
+                    <select
+                      id="expense-category"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    >
+                      <option value="Food">Food</option>
+                      <option value="Transport">Transport</option>
+                      <option value="Shopping">Shopping</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <!-- Optional: category filter (bonus) -->
+                  <div class="space-y-1.5">
+                    <label
+                      for="filter-category"
+                      class="block text-xs font-medium text-gray-700"
+                      >Filter by category</label
+                    >
+                    <select
+                      id="filter-category"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                    >
+                      <option value="all">All</option>
+                      <option value="Food">Food</option>
+                      <option value="Transport">Transport</option>
+                      <option value="Shopping">Shopping</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Error message -->
+                <p
+                  id="form-error"
+                  class="hidden text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+                ></p>
+
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    type="submit"
+                    class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 transition"
+                  >
+                    Add Expense
+                  </button>
+
+                  <button
+                    type="button"
+                    id="clear-all"
+                    class="text-xs text-gray-500 hover:text-red-500 hover:underline underline-offset-4"
+                  >
+                    Clear all expenses
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <!-- Total card -->
+            <section
+              class="bg-emerald-50 text-emerald-900 rounded-xl border border-emerald-100 shadow-sm p-5 sm:p-6 flex flex-col justify-between gap-4"
+            >
+              <div class="space-y-2">
+                <p class="text-xs uppercase tracking-[0.18em] font-semibold">
+                  Total Spent
+                </p>
+                <p
+                  id="total-amount"
+                  class="text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums"
+                >
+                  ₹0.00
+                </p>
+                <p class="text-xs text-emerald-800">
+                  This is the sum of all expenses currently listed below. Adding
+                  or deleting an item will update this automatically.
+                </p>
+              </div>
+
+              <div class="flex items-center justify-between text-xs">
+                <p>
+                  Entries:
+                  <span
+                    id="expense-count"
+                    class="font-semibold tabular-nums"
+                  ></span>
+                </p>
+                <p class="text-emerald-800">
+                  Data is saved locally in your browser.
+                </p>
+              </div>
+            </section>
+          </div>
+
+          <!-- Expense table -->
+          <section
+            class="bg-blue-100/40 border border-blue-200 rounded-xl shadow-sm overflow-hidden"
+          >
+            <div
+              class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-800 bg-slate-900/70"
+            >
+              <h2 class="text-sm font-semibold tracking-tight">
+                Expense History
+              </h2>
+              <p
+                id="active-filter-label"
+                class="text-[11px] text-gray-500 font-medium"
+              >
+                Showing: All categories
+              </p>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm text-left">
+                <thead
+                  class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500"
+                >
+                  <tr>
+                    <th class="px-4 sm:px-6 py-3 font-medium">Name</th>
+                    <th class="px-4 sm:px-6 py-3 font-medium">Category</th>
+                    <th
+                      class="px-4 sm:px-6 py-3 font-medium text-right whitespace-nowrap"
+                    >
+                      Amount (₹)
+                    </th>
+                    <th
+                      class="px-3 sm:px-4 py-3 font-medium text-right w-px"
+                    >
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="expense-table-body"
+                  class="divide-y divide-gray-100"
+                >
+                  <!-- Populated via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              id="empty-state"
+              class="px-4 sm:px-6 py-6 text-center text-sm text-gray-500"
+            >
+              No expenses yet. Add your first one using the form above.
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="border-t border-gray-200 bg-white">
+        <div
+          class="max-w-4xl mx-auto px-4 py-4 text-[11px] sm:text-xs text-gray-500 flex flex-wrap items-center justify-between gap-2"
+        >
+          <p>Built as a one-day expense tracker project.</p>
+          <p>
+            Data is stored locally in your browser using
+            <span class="font-mono text-gray-700">localStorage</span>.
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="./script.js" defer></script>
+  </body>
+</html>
+

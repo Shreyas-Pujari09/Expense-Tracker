@@ -1,6 +1,28 @@
-// Simple Expense Tracker using localStorage
+// Simple Expense Tracker using Firebase Firestore
 
-const STORAGE_KEY = "expense-tracker-expenses";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD1RIH2zxOvp6RwlRv-BiEIDl1PCoriGDQ",
+  authDomain: "expensetracker-c5ce2.firebaseapp.com",
+  projectId: "expensetracker-c5ce2",
+  storageBucket: "expensetracker-c5ce2.firebasestorage.app",
+  messagingSenderId: "477868502941",
+  appId: "1:477868502941:web:0d80acf6609826108b4974",
+  measurementId: "G-8VWBX5MQPN",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const expensesCollection = collection(db, "expenses");
 
 const form = document.getElementById("expense-form");
 const nameInput = document.getElementById("expense-name");
@@ -37,28 +59,23 @@ function showError(message) {
   errorEl.classList.remove("hidden");
 }
 
-function saveToStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-}
-
-function loadFromStorage() {
+async function loadExpensesFromFirestore() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    // Ensure objects have required shape
-    return parsed
-      .map((item) => ({
-        id: item.id ?? crypto.randomUUID?.() ?? String(Date.now()),
-        name: String(item.name ?? "").trim(),
-        category: String(item.category ?? "Other"),
-        amount: Number(item.amount) || 0,
-      }))
+    const snapshot = await getDocs(expensesCollection);
+    expenses = snapshot.docs
+      .map((document) => {
+        const data = document.data() || {};
+        return {
+          id: document.id,
+          name: String(data.name ?? "").trim(),
+          category: String(data.category ?? "Other"),
+          amount: Number(data.amount) || 0,
+        };
+      })
       .filter((item) => item.name && item.amount > 0);
-  } catch {
-    return [];
+    render();
+  } catch (error) {
+    console.error("Failed to load expenses from Firestore", error);
   }
 }
 
@@ -150,36 +167,50 @@ function render() {
   });
 }
 
-function addExpense(name, amount, category) {
-  const expense = {
-    id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
-    name: name.trim(),
-    category,
-    amount,
-  };
-  expenses.push(expense);
-  saveToStorage();
-  render();
+async function addExpense(name, amount, category) {
+  try {
+    await addDoc(expensesCollection, {
+      name: name.trim(),
+      category,
+      amount,
+      createdAt: Date.now(),
+    });
+    await loadExpensesFromFirestore();
+  } catch (error) {
+    console.error("Failed to add expense", error);
+  }
 }
 
-function deleteExpense(id) {
-  expenses = expenses.filter((expense) => expense.id !== id);
-  saveToStorage();
-  render();
+async function deleteExpense(id) {
+  try {
+    await deleteDoc(doc(db, "expenses", id));
+    await loadExpensesFromFirestore();
+  } catch (error) {
+    console.error("Failed to delete expense", error);
+  }
 }
 
-function clearAllExpenses() {
+async function clearAllExpenses() {
   if (!expenses.length) return;
   const confirmed = window.confirm(
     "This will remove all expenses from this device. Continue?"
   );
   if (!confirmed) return;
-  expenses = [];
-  saveToStorage();
-  render();
+  try {
+    const snapshot = await getDocs(expensesCollection);
+    await Promise.all(
+      snapshot.docs.map((document) =>
+        deleteDoc(doc(db, "expenses", document.id))
+      )
+    );
+    expenses = [];
+    render();
+  } catch (error) {
+    console.error("Failed to clear expenses", error);
+  }
 }
 
-function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault();
   const name = nameInput.value.trim();
   const amountValue = amountInput.value;
@@ -199,7 +230,7 @@ function handleSubmit(event) {
   }
 
   showError("");
-  addExpense(name, amount, category);
+  await addExpense(name, amount, category);
 
   // Reset form fields
   nameInput.value = "";
@@ -219,10 +250,9 @@ function initCurrentDate() {
   currentDateEl.textContent = formatted;
 }
 
-function init() {
+async function init() {
   initCurrentDate();
-  expenses = loadFromStorage();
-  render();
+  await loadExpensesFromFirestore();
 
   form.addEventListener("submit", handleSubmit);
   filterSelect.addEventListener("change", render);
